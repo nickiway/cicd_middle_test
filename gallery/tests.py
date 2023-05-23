@@ -1,41 +1,43 @@
 from django.test import TestCase
-from .models import Image, Category
+from django.test import TestCase, Client
 from django.urls import reverse
+from .models import Image
 
-class TestGallery(TestCase):
-    def test_gallery_view_success(self):
-        response = self.client.get(reverse('main'))
+
+class GalleryViewTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.url = reverse('main')
+
+    def test_gallery_view(self):
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'gallery.html')
+        self.assertContains(response, 'Categories')
 
-    # def test_gallery_view_categories(self):
-    #     response = self.client.get(reverse('main'))
+    def test_gallery_view_categories(self):
+        Image.objects.create(title='Test Image 1', image='image1.jpg', category='Category 1')
+        Image.objects.create(title='Test Image 2', image='image2.jpg', category='Category 2')
 
-    #     category_1 = Category.objects.create(name="category one")
-    #     category_2 = Category.objects.create(name="category two")
-    #     category_3 = Category.objects.create(name="category three")
-
-    #     categories = response.context['categories']
-
-    #     self.assertEqual(len(categories), 0)
-    #     self.assertEqual(set(categories), {category_3, category_2, category_1})
-
-class TestImageDetail(TestCase):
-    def test_image_detail_view_success(self):
-        category = Category.objects.create(name='category one')
-        image = Image.objects.create(title='image1', image='free-icon-github-3291695_HOUsBmM.png', created_date="2023-05-23", age_limit=16)
-        image.categories.add(category)
-
-        path = reverse('image_detail', args=[image.id])
-        response = self.client.get(path)
-
+        response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-    
-    def test_image_detail_view_image(self):
-        category = Category.objects.create(name='category 1')
-        image = Image.objects.create(title='image1', image='free-icon-github-3291695_HOUsBmM.png', created_date="2023-05-23", age_limit=16)
-        image.categories.add(category)
-        
-        path = reverse('image_detail', args=[image.id])
-        response = self.client.get(path)
+        self.assertQuerysetEqual(
+            response.context['categories'],
+            ['<Image: Category 1>', '<Image: Category 2>'],
+            ordered=False
+        )
 
-        self.assertEqual(response.context["image"], image)
+
+class ImageDetailTestCase(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.image = Image.objects.create(title='Test Image', image='test.jpg')
+        self.url = reverse('image_detail', kwargs={'id': self.image.id})
+
+    def test_image_detail(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'image_detail.html')
+        self.assertContains(response, self.image.title)
+        self.assertContains(response, self.image.image.url)
+

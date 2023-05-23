@@ -1,13 +1,15 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Category, Image
+from django.views import View
+from .models import Image
 
-def gallery_view(request):
-    return render(request, 'gallery.html', {
-        'categories': Category.objects.all(),
-    })
 
-def image_detail(request, pk):
-    image = get_object_or_404(Image, pk=pk)
-    return render(request, 'image_detail.html', {
-        'image': image
-    })
+class gallery_view(View):
+    def get(self, request):
+        categories = Image.objects.values('category').distinct()
+        return render(request, 'gallery.html', {'categories': categories})
+
+class image_detail(View):
+    def get(self, request, id):
+        image = Image.objects.get(id=id)
+        return render(request, 'image_detail.html', {'image': image})
+
