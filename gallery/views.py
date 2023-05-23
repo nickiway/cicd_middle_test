@@ -12,3 +12,4 @@ class image_detail(View):
     def get(self, request, id):
         image = Image.objects.get(id=id)
         return render(request, 'image_detail.html', {'image': image})
+

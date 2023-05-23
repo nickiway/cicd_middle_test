@@ -40,3 +40,4 @@ class ImageDetailTestCase(TestCase):
         self.assertTemplateUsed(response, 'image_detail.html')
         self.assertContains(response, self.image.title)
         self.assertContains(response, self.image.image.url)
+
